@@ -1,11 +1,9 @@
 package com.example.eat_it.auth.security;
 
-
 import com.example.eat_it.user.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -19,20 +17,23 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    // 🔐 SECRET KEY (Base64 encoded recommended)
-    private static final String SECRET_KEY = "your-256-bit-secret-your-256-bit-secret";
+    // 🔐 SIMPLE SECRET KEY (NO BASE64 → FIXED)
+    private static final String SECRET_KEY = "mysecretkeymysecretkeymysecretkey123"; // min 32 chars
 
     // ⏱ Token validity (15 mins)
     private static final long JWT_EXPIRATION = 1000 * 60 * 15;
 
-    // ✅ Generate Token
-    public String getToken(String email,Role role) {
-        return generateToken(new HashMap<>(), email,role);
+    // ✅ Generate Token (default)
+    public String getToken(String email, Role role) {
+        return generateToken(new HashMap<>(), email, role);
     }
 
     // ✅ Generate Token with claims
     public String generateToken(Map<String, Object> extraClaims, String email, Role role) {
+
+        // 🔥 Add role inside JWT
         extraClaims.put("role", role.name());
+
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(email)
@@ -45,6 +46,11 @@ public class JwtService {
     // ✅ Extract Username (email)
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    // ✅ Extract Role
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
     // ✅ Extract Expiration
@@ -78,9 +84,8 @@ public class JwtService {
                 .getBody();
     }
 
-    // 🔑 Get Signing Key
+    // 🔑 Get Signing Key (FIXED VERSION ✅)
     private Key getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 }
