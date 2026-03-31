@@ -26,7 +26,6 @@ public class AuthController {
     ) {
         return authService.register(request);
     }
-
     // ✅ LOGIN
     @PostMapping("/login")
     public AuthResponseDTO login(

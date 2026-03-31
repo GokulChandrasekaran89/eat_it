@@ -1,6 +1,5 @@
 package com.example.eat_it.auth.service;
 
-
 import com.example.eat_it.auth.security.JwtService;
 import com.example.eat_it.common.dto.AuthResponseDTO;
 import com.example.eat_it.common.dto.LoginRequestDTO;
@@ -11,20 +10,29 @@ import com.example.eat_it.user.enums.ApprovalStatus;
 import com.example.eat_it.user.enums.Role;
 import com.example.eat_it.user.repository.UserRepo;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepo userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+
+    // ✅ Constructor Injection (Fix for Lombok issue)
+    public AuthService(UserRepo userRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService,
+                       AuthenticationManager authenticationManager) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+    }
 
     // ✅ REGISTER
     public AuthResponseDTO register(RegisterRequestDTO request) {
@@ -74,8 +82,10 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // ❗ Approval check
-        if (user.getApprovalStatus() != ApprovalStatus.APPROVED) {
+        // ✅ Approval check ONLY for OWNER & DELIVERY
+        if ((user.getRole() == Role.OWNER || user.getRole() == Role.DELIVERY)
+                && user.getApprovalStatus() != ApprovalStatus.APPROVED) {
+
             throw new RuntimeException("User not approved by admin");
         }
 
